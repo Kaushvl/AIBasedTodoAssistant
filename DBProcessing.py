@@ -1,4 +1,5 @@
 import pymongo
+# from LLMProcessing import 
 
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client["TodoProject"]
@@ -86,30 +87,29 @@ def fetch_all_data():
 #         print(f"Error updating document: {e}")
 #         return False
 
+def delete_task(strId):
+    """
+    Deletes a document from the MongoDB collection based on the _id provided.
 
-# def delete_documents(natural_language_filter):
-#     """
-#     Deletes documents from the MongoDB collection based on a natural language filter.
+    Args:
+        strId (str): The _id of the document to delete.
 
-#     Args:
-#         natural_language_filter (str): A human-readable filter for selecting documents to delete.
+    Returns:
+        int: 1 if the document was deleted successfully, 0 otherwise.
+    """
 
-#     Returns:
-#         int: The number of documents deleted.
-#     """
+    try:
+        # Convert strId to ObjectId if needed
+        from bson import ObjectId
+        object_id = ObjectId(strId)
 
-#     try:
-#         # Use the LLM to interpret the filter and convert it to a MongoDB filter expression
-#         llm_filter_expression = llm.parse_filter(natural_language_filter)
+        result = collection.delete_one({"_id": object_id})
 
-#         # Convert the parsed filter to a MongoDB filter object
-#         mongo_filter = process_llm_filter_expression(llm_filter_expression)
+        if result.deleted_count == 1:
+            return 1
+        else:
+            return 0
 
-#         # Delete matching documents from the collection
-#         result = collection.delete_many(mongo_filter)
-
-#         return result.deleted_count
-
-    # except Exception as e:
-    #     print(f"Error deleting documents: {e}")
-    #     return 0
+    except Exception as e:
+        print(f"Error deleting document: {e}")
+        return 0

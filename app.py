@@ -1,5 +1,5 @@
-from DBProcessing import create_task,fetch_all_data
-from LLMProcessing import HandleInputLLM
+from DBProcessing import create_task,fetch_all_data,delete_task
+from LLMProcessing import HandleInputLLM,GetIdFromText
 import tkinter as tk
 from tkinter import ttk
 import speech_recognition as sr
@@ -15,15 +15,11 @@ class AudioInputApp:
         self.record_button = tk.Button(master, text="Record", command=self.record_audio)
         self.record_button.pack()
 
-
-                # Table to display tasks
+        # Table to display tasks
         self.tree = ttk.Treeview(master, columns=("Title",))
         self.tree.heading("#0", text="Index")
         self.tree.heading("Title", text="Title")
         self.tree.pack()
-
-        # Connect to MongoDB
-        
 
         # Fetch all tasks and display in the table
         self.display_tasks()
@@ -58,18 +54,22 @@ class AudioInputApp:
 
 
     def ProcessInput(self,strUserText):
+        DBResponse = ''
         if strUserText:
             response = HandleInputLLM(strUserText)
 
             if response["UserAction"] == "Create":
                 createdict = {"Title": response["Title"]}
                 DBResponse = create_task(createdict)
+
+            if response["UserAction"] == "Delete":
+                strId = GetIdFromText(response["Title"])
+                DBResponse = delete_task(strId['Id'])
                 print(DBResponse)
-                self.display_tasks()
+            self.display_tasks()
         return DBResponse
             
     
-
 if __name__ == "__main__":
     root = tk.Tk()
     app = AudioInputApp(root)
