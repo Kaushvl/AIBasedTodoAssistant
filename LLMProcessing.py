@@ -14,8 +14,9 @@ def UserInputProcessing(strInputText):
     0. Act as a poliet assistant and reply to input text as a real human assistant in AssistantMessage.
     1. I am going to provide you a text, which is originally a Command from an human and it will be a raw input, you need to analyize the text and return 'True' or 'False' in string weather the user wants to perfrom any operation on Todo list from [Create,Read,Update,Delete] if yes , return True along with Actual task to add in todo list in UserTask and if No , the return False and empty string for UserTask and UserAction only.
     2. You need to analize it and based on it identiy the action they want to perfrom from [Create,Read,Update,Delete].
+    3. Task Status will be only from [NotStarted(Give this as Default),InProgress,Completed] and Task Priority will be only from [Low,Medium(Give this as Default),High] 
     3. Importantly notice that specifically dont use any symbol such as #'# or #"# in any of Values of json.
-    4. Only return the output in json without any description fromat as "AssistantMessage":"YourActualAssistantMessageWithoutAnySymbol","OperationBool":"YourAnswerForUserOperationInString", "UserTask":"YourAnswerForUserMessage", "UserAction":"YourAnswerForUserAction"
+    4. Only return the output in json without any description fromat as "AssistantMessage":"YourActualAssistantMessageWithoutAnySymbol","OperationBool":"YourAnswerForUserOperationInString","UserAction":"YourAnswerForUserAction", "UserTask": Dict("MessageTitle" : "YourAnswerForMessageTitleForCRUDOperation", "TaskPriority": "YourAnswerForUserTaskPriority", "TaskStatus": "YourAnswerForTaskStatus")
     '''
     human = "{strInputText}"
     prompt = ChatPromptTemplate.from_messages([("system", system), ("human", human)])
@@ -53,13 +54,5 @@ def GetIdFromText(strInputText):
     return jsonResponse
 
 
-# def HandleInputLLM(strUserText):
-#     jsonUserMessageDetails = UserInputProcessing(strUserText)
-
-#     if bool(jsonUserMessageDetails['OperationBool']):
-#         jsResponse = TextProcessing(jsonUserMessageDetails['UserMessage'])
-        
-#     return jsResponse
-
 if __name__ == '__main__':
-    print(UserInputProcessing("Delete task which is about reaeding a book"))
+    print(UserInputProcessing("Add a task about cleaning labtop with low priority and status as inprogress"))

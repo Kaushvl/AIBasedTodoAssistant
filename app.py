@@ -1,4 +1,4 @@
-from DBProcessing import create_task,fetch_all_data,delete_task
+from DBProcessing import create_task,fetch_all_data,delete_task,update_task
 from LLMProcessing import UserInputProcessing,GetIdFromText
 import tkinter as tk
 from tkinter import ttk
@@ -8,7 +8,7 @@ import pyttsx3
 class AudioInputApp:
     def __init__(self, master):
         self.master = master
-        master.title("Audio Input")
+        master.title("Todo Assistant")
 
         self.label = tk.Label(master, text="Press 'Record' to start recording")
         self.label.pack()
@@ -16,10 +16,17 @@ class AudioInputApp:
         self.record_button = tk.Button(master, text="Record", command=self.record_audio)
         self.record_button.pack()
 
-        # Table to display tasks
-        self.tree = ttk.Treeview(master, columns=("Title",))
+        # Configure the style for the Treeview
+        style = ttk.Style()
+        style.configure("Treeview", rowheight=30)  # Adjust row height if needed
+        style.configure("Treeview.Heading", font=("Arial", 12))  # Customize heading font if needed
+
+        # Create a Treeview with centered alignment
+        self.tree = ttk.Treeview(master, columns=("TaskName", "TaskPriority", "TaskStatus"), style="Treeview")
         self.tree.heading("#0", text="Index")
-        self.tree.heading("Title", text="Title")
+        self.tree.heading("TaskName", text="TaskName")
+        self.tree.heading("TaskPriority", text="TaskPriority")
+        self.tree.heading("TaskStatus", text="TaskStatus")
         self.tree.pack()
 
         # Fetch all tasks and display in the table
@@ -52,12 +59,19 @@ class AudioInputApp:
 
         # Insert tasks into the table
         for idx, task in enumerate(all_tasks):
-            self.tree.insert("", "end", text=str(idx + 1), values=(task["Title"],))
+            self.tree.insert("", "end", text=str(idx + 1), values=(task["MessageTitle"],task["TaskPriority"],task["TaskStatus"]))
+
+        # Set the alignment for each column to center
+        self.tree.column("#0", anchor=tk.CENTER)  # Anchor for the index column
+        self.tree.column("TaskName", anchor=tk.CENTER)  # Anchor for the TaskName column
+        self.tree.column("TaskPriority", anchor=tk.CENTER)  # Anchor for the TaskPriority column
+        self.tree.column("TaskStatus", anchor=tk.CENTER)
 
     def read_out_message(self, message):
         engine = pyttsx3.init()
         engine.say(message)
         engine.runAndWait()
+
 
 
     def ProcessInput(self,strUserText):
@@ -66,13 +80,19 @@ class AudioInputApp:
             response = UserInputProcessing(strUserText)
             if bool(response['OperationBool']):
                 if response["UserAction"] == "Create":
-                    createdict = {"Title": response["UserTask"]}
-                    DBResponse = create_task(createdict)
+                    DBResponse = create_task(response['UserTask'])
 
                 if response["UserAction"] == "Delete":
-                    if response["UserTask"]:
-                        strId = GetIdFromText(response["UserTask"])
+                    if response["UserTask"]["MessageTitle"]:
+                        strId = GetIdFromText(response["UserTask"]['MessageTitle'])
                         DBResponse = delete_task(strId['Id'])
+                    print(DBResponse)
+
+                if response["UserAction"] == "Update":
+                    if response["UserTask"]["MessageTitle"]:
+                        strId = GetIdFromText(response["UserTask"]['MessageTitle'])
+                        del response["UserTask"]['MessageTitle']
+                        DBResponse = update_task(strId['Id'],response["UserTask"])
                     print(DBResponse)
             if response['AssistantMessage']:
                 self.read_out_message(response['AssistantMessage'])

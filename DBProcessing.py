@@ -59,33 +59,33 @@ def fetch_all_data():
 #         print(f"Error reading documents: {e}")
 #         return []
 
+def update_task(strId, new_fields):
+    """
+    Updates fields of a document in the MongoDB collection based on the _id provided.
 
-# def update_document(natural_language_update):
-#     """
-#     Updates a document in the MongoDB collection based on a natural language update instruction.
+    Args:
+        strId (str): The _id of the document to update.
+        new_fields (dict): A dictionary containing the fields to update and their new values.
 
-#     Args:
-#         natural_language_update (str): A human-readable instruction for updating a document.
+    Returns:
+        int: 1 if the document was updated successfully, 0 otherwise.
+    """
 
-#     Returns:
-#         bool: True if the update was successful, False otherwise.
-#     """
+    try:
+        # Convert strId to ObjectId if needed
+        from bson import ObjectId
+        object_id = ObjectId(strId)
 
-#     try:
-#         # Use the LLM to comprehend the update instruction and extract relevant details
-#         llm_update_info = llm.parse_update(natural_language_update)
+        result = collection.update_one({"_id": object_id}, {"$set": new_fields})
 
-#         # Process the LLM interpretation to construct a MongoDB update query
-#         update_query, update_document = process_llm_update_info(llm_update_info)
+        if result.modified_count == 1:
+            return 1
+        else:
+            return 0
 
-#         # Update the document in the collection
-#         result = collection.update_one(update_query, update_document)
-
-#         return result.matched_count > 0
-
-#     except Exception as e:
-#         print(f"Error updating document: {e}")
-#         return False
+    except Exception as e:
+        print(f"Error updating document: {e}")
+        return 0
 
 def delete_task(strId):
     """
