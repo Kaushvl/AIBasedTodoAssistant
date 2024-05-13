@@ -1,8 +1,9 @@
 from DBProcessing import create_task,fetch_all_data,delete_task
-from LLMProcessing import HandleInputLLM,GetIdFromText
+from LLMProcessing import UserInputProcessing,GetIdFromText
 import tkinter as tk
 from tkinter import ttk
 import speech_recognition as sr
+import pyttsx3 
 
 class AudioInputApp:
     def __init__(self, master):
@@ -33,6 +34,7 @@ class AudioInputApp:
 
         try:
             recognized_text = recognizer.recognize_google(audio_data)
+            print(recognized_text,"recognized_text")
             dbStatus = self.ProcessInput(recognized_text)
             self.label.config(text=f"Speech Recognition Result: {recognized_text}")
         except sr.UnknownValueError:
@@ -52,20 +54,29 @@ class AudioInputApp:
         for idx, task in enumerate(all_tasks):
             self.tree.insert("", "end", text=str(idx + 1), values=(task["Title"],))
 
+    def read_out_message(self, message):
+        engine = pyttsx3.init()
+        engine.say(message)
+        engine.runAndWait()
+
 
     def ProcessInput(self,strUserText):
         DBResponse = ''
         if strUserText:
-            response = HandleInputLLM(strUserText)
+            response = UserInputProcessing(strUserText)
+            if bool(response['OperationBool']):
+                if response["UserAction"] == "Create":
+                    createdict = {"Title": response["UserTask"]}
+                    DBResponse = create_task(createdict)
 
-            if response["UserAction"] == "Create":
-                createdict = {"Title": response["Title"]}
-                DBResponse = create_task(createdict)
+                if response["UserAction"] == "Delete":
+                    if response["UserTask"]:
+                        strId = GetIdFromText(response["UserTask"])
+                        DBResponse = delete_task(strId['Id'])
+                    print(DBResponse)
+            if response['AssistantMessage']:
+                self.read_out_message(response['AssistantMessage'])
 
-            if response["UserAction"] == "Delete":
-                strId = GetIdFromText(response["Title"])
-                DBResponse = delete_task(strId['Id'])
-                print(DBResponse)
             self.display_tasks()
         return DBResponse
             
