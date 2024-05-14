@@ -1,5 +1,5 @@
 from DBProcessing import create_task,fetch_all_data,delete_task,update_task
-from LLMProcessing import UserInputProcessing,GetIdFromText
+from LLMProcessing import UserInputProcessing,GetIdFromText, PerfromDBTask
 import tkinter as tk
 from tkinter import ttk
 import speech_recognition as sr
@@ -27,7 +27,17 @@ class AudioInputApp:
         self.tree.heading("TaskName", text="TaskName")
         self.tree.heading("TaskPriority", text="TaskPriority")
         self.tree.heading("TaskStatus", text="TaskStatus")
+
+        self.BoxMessage = ''
+
         self.tree.pack()
+
+        # Create a Text widget for the comment box
+        self.comment_box_label = tk.Label(master, text="Comment Box:")
+        self.comment_box_label.pack()
+
+        self.comment_box = tk.Text(master, height=5, width=50)
+        self.comment_box.pack()
 
         # Fetch all tasks and display in the table
         self.display_tasks()
@@ -40,10 +50,10 @@ class AudioInputApp:
             self.label.config(text="Processing...")
 
         try:
-            recognized_text = recognizer.recognize_google(audio_data)
-            print(recognized_text,"recognized_text")
-            dbStatus = self.ProcessInput(recognized_text)
-            self.label.config(text=f"Speech Recognition Result: {recognized_text}")
+            # recognized_text = recognizer.recognize_google(audio_data)
+            # print(recognized_text,"recognized_text")
+            dbStatus = self.ProcessInput("Read all the task which are not started yet")
+            self.label.config(text=f"Speech Recognition Result")
         except sr.UnknownValueError:
             self.label.config(text="Sorry, I could not understand what you said")
         except sr.RequestError:
@@ -94,6 +104,14 @@ class AudioInputApp:
                         del response["UserTask"]['MessageTitle']
                         DBResponse = update_task(strId['Id'],response["UserTask"])
                     print(DBResponse)
+
+                if response["UserAction"] == "Read":
+                    if response["UserTask"]["MessageTitle"]:
+                        self.BoxMessage = PerfromDBTask(response["UserTask"]['MessageTitle']) 
+                        print(self.BoxMessage,'self.BoxMessage')   
+                        self.comment_box.delete("1.0", tk.END)  # Clear the comment box
+                        self.comment_box.insert(tk.END, self.BoxMessage)  # Insert the new message             
+
             if response['AssistantMessage']:
                 self.read_out_message(response['AssistantMessage'])
 
@@ -105,3 +123,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = AudioInputApp(root)
     root.mainloop()
+
