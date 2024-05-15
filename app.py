@@ -1,9 +1,10 @@
-from DBProcessing import create_task,fetch_all_data,delete_task,update_task
-from LLMProcessing import UserInputProcessing,GetIdFromText, PerfromDBTask
+from DBProcessing import DatabaseAct
+from LLMProcessing import LLMProcessing
 import tkinter as tk
 from tkinter import ttk
 import speech_recognition as sr
 import pyttsx3 
+import time 
 
 class AudioInputApp:
     def __init__(self, master):
@@ -39,6 +40,8 @@ class AudioInputApp:
         self.comment_box = tk.Text(master, height=5, width=50)
         self.comment_box.pack()
 
+        self.ttsEngine = pyttsx3.init()
+
         # Fetch all tasks and display in the table
         self.display_tasks()
 
@@ -50,9 +53,9 @@ class AudioInputApp:
             self.label.config(text="Processing...")
 
         try:
-            # recognized_text = recognizer.recognize_google(audio_data)
-            # print(recognized_text,"recognized_text")
-            dbStatus = self.ProcessInput("Read all the task which are not started yet")
+            recognized_text = recognizer.recognize_google(audio_data)
+            print(recognized_text,"recognized_text")
+            dbStatus = self.ProcessInput(recognized_text)
             self.label.config(text=f"Speech Recognition Result")
         except sr.UnknownValueError:
             self.label.config(text="Sorry, I could not understand what you said")
@@ -65,7 +68,7 @@ class AudioInputApp:
             self.tree.delete(item)
 
         # Fetch all tasks from MongoDB
-        all_tasks = fetch_all_data()
+        all_tasks = DatabaseAct.fetch_all_data()
 
         # Insert tasks into the table
         for idx, task in enumerate(all_tasks):
@@ -78,39 +81,40 @@ class AudioInputApp:
         self.tree.column("TaskStatus", anchor=tk.CENTER)
 
     def read_out_message(self, message):
-        engine = pyttsx3.init()
-        engine.say(message)
-        engine.runAndWait()
+        message = "you and " + message
+        self.ttsEngine.say(message)
+        self.ttsEngine.runAndWait()
 
 
 
     def ProcessInput(self,strUserText):
         DBResponse = ''
         if strUserText:
-            response = UserInputProcessing(strUserText)
+            response = LLMProcessing.UserInputProcessing(strUserText)
             if bool(response['OperationBool']):
                 if response["UserAction"] == "Create":
-                    DBResponse = create_task(response['UserTask'])
+                    DBResponse = DatabaseAct.create_task(response['UserTask'])
 
                 if response["UserAction"] == "Delete":
                     if response["UserTask"]["MessageTitle"]:
-                        strId = GetIdFromText(response["UserTask"]['MessageTitle'])
-                        DBResponse = delete_task(strId['Id'])
+                        strId = LLMProcessing.GetIdFromText(response["UserTask"]['MessageTitle'])
+                        DBResponse = DatabaseAct.delete_task(strId['Id'])
                     print(DBResponse)
 
                 if response["UserAction"] == "Update":
                     if response["UserTask"]["MessageTitle"]:
-                        strId = GetIdFromText(response["UserTask"]['MessageTitle'])
+                        strId = LLMProcessing.GetIdFromText(response["UserTask"]['MessageTitle'])
                         del response["UserTask"]['MessageTitle']
-                        DBResponse = update_task(strId['Id'],response["UserTask"])
+                        DBResponse = DatabaseAct.update_task(strId['Id'],response["UserTask"])
                     print(DBResponse)
 
                 if response["UserAction"] == "Read":
                     if response["UserTask"]["MessageTitle"]:
-                        self.BoxMessage = PerfromDBTask(response["UserTask"]['MessageTitle']) 
+                        self.BoxMessage = LLMProcessing.PerfromDBTask(response["UserTask"]['MessageTitle']) 
                         print(self.BoxMessage,'self.BoxMessage')   
                         self.comment_box.delete("1.0", tk.END)  # Clear the comment box
-                        self.comment_box.insert(tk.END, self.BoxMessage)  # Insert the new message             
+                        self.comment_box.insert(tk.END, self.BoxMessage)  # Insert the new message   
+                        response['AssistantMessage'] = self.BoxMessage          
 
             if response['AssistantMessage']:
                 self.read_out_message(response['AssistantMessage'])

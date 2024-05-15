@@ -1,115 +1,89 @@
 import pymongo
-# from LLMProcessing import 
-
 client = pymongo.MongoClient("mongodb://localhost:27017/")
 db = client["TodoProject"]
 collection = db["TodoList"]
 
-def create_task(document):
-    """
-    Creates a new document in the MongoDB collection based on a natural language description.
+class DatabaseAct:
+    @staticmethod
+    def create_task(document):
+        """
+        Creates a new document in the MongoDB collection based on a natural language description.
 
-    Args:
-        natural_language_description (str): A human-readable description of the document to be created.
+        Args:
+            natural_language_description (str): A human-readable description of the document to be created.
 
-    Returns:
-        dict: The newly created document in dictionary format.
-    """
+        Returns:
+            dict: The newly created document in dictionary format.
+        """
 
-    try:
-        # Insert the document into the collection
-        result = collection.insert_one(document)
+        try:
+            # Insert the document into the collection
+            result = collection.insert_one(document)
 
-        return document
+            return document
 
-    except Exception as e:
-        print(f"Error creating document: {e}")
-        return None
-    
-def fetch_all_data():
-    """Fetches all call data from the database"""
-    data = collection.find()
-    return data
+        except Exception as e:
+            print(f"Error creating document: {e}")
+            return None
+        
+    @staticmethod 
+    def fetch_all_data():
+        """Fetches all call data from the database"""
+        data = collection.find()
+        return data
 
+    @staticmethod 
+    def update_task(strId, new_fields):
+        """
+        Updates fields of a document in the MongoDB collection based on the _id provided.
 
-# def read_documents(natural_language_query):
-#     """
-#     Reads documents from the MongoDB collection based on a natural language query.
+        Args:
+            strId (str): The _id of the document to update.
+            new_fields (dict): A dictionary containing the fields to update and their new values.
 
-#     Args:
-#         natural_language_query (str): A human-readable query for filtering documents.
+        Returns:
+            int: 1 if the document was updated successfully, 0 otherwise.
+        """
 
-#     Returns:
-#         list: A list of matching documents in dictionary format.
-#     """
+        try:
+            # Convert strId to ObjectId if needed
+            from bson import ObjectId
+            object_id = ObjectId(strId)
 
-#     try:
-#         # Use the LLM to understand the query and potentially translate it to MongoDB syntax
-#         llm_parsed_query = llm.parse_query(natural_language_query)
+            result = collection.update_one({"_id": object_id}, {"$set": new_fields})
 
-#         # Convert the parsed query to a MongoDB query object
-#         mongo_query = process_llm_parsed_query(llm_parsed_query)
+            if result.modified_count == 1:
+                return 1
+            else:
+                return 0
 
-#         # Find matching documents in the collection
-#         cursor = collection.find(mongo_query)
-
-#         return list(cursor)
-
-#     except Exception as e:
-#         print(f"Error reading documents: {e}")
-#         return []
-
-def update_task(strId, new_fields):
-    """
-    Updates fields of a document in the MongoDB collection based on the _id provided.
-
-    Args:
-        strId (str): The _id of the document to update.
-        new_fields (dict): A dictionary containing the fields to update and their new values.
-
-    Returns:
-        int: 1 if the document was updated successfully, 0 otherwise.
-    """
-
-    try:
-        # Convert strId to ObjectId if needed
-        from bson import ObjectId
-        object_id = ObjectId(strId)
-
-        result = collection.update_one({"_id": object_id}, {"$set": new_fields})
-
-        if result.modified_count == 1:
-            return 1
-        else:
+        except Exception as e:
+            print(f"Error updating document: {e}")
             return 0
+    @staticmethod 
+    def delete_task(strId):
+        """
+        Deletes a document from the MongoDB collection based on the _id provided.
 
-    except Exception as e:
-        print(f"Error updating document: {e}")
-        return 0
+        Args:
+            strId (str): The _id of the document to delete.
 
-def delete_task(strId):
-    """
-    Deletes a document from the MongoDB collection based on the _id provided.
+        Returns:
+            int: 1 if the document was deleted successfully, 0 otherwise.
+        """
 
-    Args:
-        strId (str): The _id of the document to delete.
+        try:
+            # Convert strId to ObjectId if needed
+            from bson import ObjectId
+            object_id = ObjectId(strId)
 
-    Returns:
-        int: 1 if the document was deleted successfully, 0 otherwise.
-    """
+            result = collection.delete_one({"_id": object_id})
 
-    try:
-        # Convert strId to ObjectId if needed
-        from bson import ObjectId
-        object_id = ObjectId(strId)
+            if result.deleted_count == 1:
+                return 1
+            else:
+                return 0
 
-        result = collection.delete_one({"_id": object_id})
-
-        if result.deleted_count == 1:
-            return 1
-        else:
+        except Exception as e:
+            print(f"Error deleting document: {e}")
             return 0
-
-    except Exception as e:
-        print(f"Error deleting document: {e}")
-        return 0
