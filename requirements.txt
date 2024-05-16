@@ -1,0 +1,6 @@
+tkinter
+speech_recognition
+pyttsx3
+pymongo
+langchain_core
+langchain_groq
