@@ -2,38 +2,58 @@ import tkinter as tk
 from tkinter import ttk
 import speech_recognition as sr
 import pyttsx3
-import time
+import threading
 from DBProcessing import DatabaseAct
 from LLMProcessing import LLMProcessing
-import threading
 
 class AudioInputApp:
     def __init__(self, master):
         self.master = master
         master.title("Todo Assistant")
-
-        self.label = tk.Label(master, text="Listening for trigger word...")
-        self.label.pack()
-
-        self.ButtonText = 'Activate'
+        master.geometry("800x600")
+        master.configure(bg="#2C3E50")
 
         style = ttk.Style()
-        style.configure("Treeview", rowheight=30)
-        style.configure("Treeview.Heading", font=("Arial", 12))
+        style.theme_use("clam")
+        style.configure("TLabel", background="#2C3E50", foreground="#ECF0F1", font=("Arial", 12))
+        style.configure("TButton", background="#2980B9", foreground="#ECF0F1", font=("Arial", 12))
+        style.configure("Treeview", background="#ECF0F1", foreground="#2C3E50", fieldbackground="#ECF0F1", rowheight=25)
+        style.configure("Treeview.Heading", font=("Arial", 14, "bold"), background="#2980B9", foreground="#ECF0F1")
+        style.map("Treeview.Heading", background=[("active", "#3498DB")])
 
-        self.tree = ttk.Treeview(master, columns=("TaskName", "TaskPriority", "TaskStatus"), style="Treeview")
-        self.tree.heading("#0", text="Index")
-        self.tree.heading("TaskName", text="TaskName")
-        self.tree.heading("TaskPriority", text="TaskPriority")
-        self.tree.heading("TaskStatus", text="TaskStatus")
+        self.label = ttk.Label(master, text="Listening for trigger word...")
+        self.label.pack(pady=10)
 
-        self.tree.pack()
+        self.tree_frame = ttk.Frame(master)
+        self.tree_frame.pack(pady=20, padx=20, fill=tk.BOTH, expand=True)
 
-        self.comment_box_label = tk.Label(master, text="Comment Box:")
-        self.comment_box_label.pack()
+        self.tree_scroll = ttk.Scrollbar(self.tree_frame)
+        self.tree_scroll.pack(side=tk.RIGHT, fill=tk.Y)
 
-        self.comment_box = tk.Text(master, height=5, width=50)
-        self.comment_box.pack()
+        self.tree = ttk.Treeview(self.tree_frame, columns=("TaskName", "TaskPriority", "TaskStatus"), yscrollcommand=self.tree_scroll.set, style="Treeview")
+        self.tree.heading("#0", text="Index", anchor=tk.CENTER)
+        self.tree.heading("TaskName", text="Task Name", anchor=tk.CENTER)
+        self.tree.heading("TaskPriority", text="Task Priority", anchor=tk.CENTER)
+        self.tree.heading("TaskStatus", text="Task Status", anchor=tk.CENTER)
+        self.tree.column("#0", width=50, anchor=tk.CENTER)
+        self.tree.column("TaskName", width=200, anchor=tk.CENTER)
+        self.tree.column("TaskPriority", width=150, anchor=tk.CENTER)
+        self.tree.column("TaskStatus", width=150, anchor=tk.CENTER)
+        self.tree.pack(fill=tk.BOTH, expand=True)
+        self.tree_scroll.config(command=self.tree.yview)
+
+        self.comment_box_label = ttk.Label(master, text="Comment Box:")
+        self.comment_box_label.pack(pady=10)
+
+        self.comment_box_frame = ttk.Frame(master)
+        self.comment_box_frame.pack(pady=10, padx=20, fill=tk.BOTH, expand=True)
+
+        self.comment_box_scroll = ttk.Scrollbar(self.comment_box_frame)
+        self.comment_box_scroll.pack(side=tk.RIGHT, fill=tk.Y)
+
+        self.comment_box = tk.Text(self.comment_box_frame, height=5, width=50, bg="#ECF0F1", fg="#2C3E50", font=("Arial", 12), yscrollcommand=self.comment_box_scroll.set)
+        self.comment_box.pack(fill=tk.BOTH, expand=True)
+        self.comment_box_scroll.config(command=self.comment_box.yview)
 
         self.recognizer = sr.Recognizer()
         self.ttsEngine = pyttsx3.init()
@@ -43,7 +63,7 @@ class AudioInputApp:
 
         self.display_tasks()
 
-            # Start the command processing thread
+        # Start the command processing thread
         self.command_thread = threading.Thread(target=self.record_audio)
         self.command_thread.start()
 
@@ -57,12 +77,11 @@ class AudioInputApp:
                 self.record_audio()
                 return
 
-
         try:
             recognized_text = self.recognizer.recognize_google(audio_data)
             print("Recognized:", recognized_text)
             if self.trigger_word in recognized_text.lower():
-                self.read_out_message("Hey! i am you Task Assistant, How can i help you?")
+                self.read_out_message("Hey! I am your Task Assistant, How can I help you?")
                 print("Trigger word detected. Activating assistant...")
                 self.label.config(text="Assistant activated. Listening...")
                 self.ProcessCondition = True
@@ -88,7 +107,7 @@ class AudioInputApp:
                 recognized_text = self.recognizer.recognize_google(audio_data)
                 print("Recognized command:", recognized_text)
                 if "exit" in recognized_text.lower():
-                    self.read_out_message("Bye! have a great day!")
+                    self.read_out_message("Bye! Have a great day!")
                     print("Exiting assistant...")
                     self.label.config(text="Assistant deactivated.")
                     self.ProcessCondition = False
@@ -99,13 +118,7 @@ class AudioInputApp:
                 print("Sorry, I could not understand what you said")
             except sr.RequestError:
                 print("Sorry, could not request results. Please check your internet connection.")
-    def check_for_commands(self):
-        # Update the UI after each command is processed
-        self.display_tasks()
 
-        # Check for new commands after a delay
-        if self.ProcessCondition:
-            self.master.after(100, self.process_commands)
 
     def display_tasks(self):
         for item in self.tree.get_children():
@@ -123,7 +136,7 @@ class AudioInputApp:
         self.tree.column("TaskStatus", anchor=tk.CENTER)
 
     def read_out_message(self, message):
-        message = "you and " + message
+        message = " " + message
         self.ttsEngine.say(message)
         self.ttsEngine.runAndWait()
 
