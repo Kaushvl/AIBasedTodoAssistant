@@ -50,12 +50,19 @@ class AudioInputApp:
     def record_audio(self):
         with sr.Microphone() as source:
             print("Listening...")
-            audio_data = self.recognizer.listen(source,timeout=2)
+            try:
+                audio_data = self.recognizer.listen(source, timeout=5)
+            except sr.WaitTimeoutError:
+                print("Listening timed out, retrying...")
+                self.record_audio()
+                return
+
 
         try:
             recognized_text = self.recognizer.recognize_google(audio_data)
             print("Recognized:", recognized_text)
             if self.trigger_word in recognized_text.lower():
+                self.read_out_message("Hey! i am you Task Assistant, How can i help you?")
                 print("Trigger word detected. Activating assistant...")
                 self.label.config(text="Assistant activated. Listening...")
                 self.ProcessCondition = True
@@ -81,6 +88,7 @@ class AudioInputApp:
                 recognized_text = self.recognizer.recognize_google(audio_data)
                 print("Recognized command:", recognized_text)
                 if "exit" in recognized_text.lower():
+                    self.read_out_message("Bye! have a great day!")
                     print("Exiting assistant...")
                     self.label.config(text="Assistant deactivated.")
                     self.ProcessCondition = False
