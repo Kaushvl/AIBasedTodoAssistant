@@ -8,6 +8,8 @@ dotenv.load_dotenv()
 groq_api_key = os.environ.get('groq_api_key')
 
 class LLMProcessing:
+
+    #Takes a string as input and based on it returns the processed string in json format
     @staticmethod
     def UserInputProcessing(strInputText):
         chat = ChatGroq(temperature=0, groq_api_key=groq_api_key, model_name="llama3-70b-8192")
@@ -31,7 +33,7 @@ class LLMProcessing:
         jsonResponse = json.loads(strResponse)
         return jsonResponse
 
-
+    # To get Id of database for delete or update queries
     @staticmethod
     def GetIdFromText(strInputText):
         chat = ChatGroq(temperature=0, groq_api_key=groq_api_key, model_name="llama3-70b-8192")
@@ -55,13 +57,13 @@ class LLMProcessing:
         
         return jsonResponse
 
+    #Reads database and provide the necessary information from user query
     @staticmethod
     def PerfromDBTask(strInputText):
         # Assuming ChatGroq and other necessary imports are defined elsewhere in your code
         chat = ChatGroq(temperature=0, groq_api_key=groq_api_key, model_name="llama3-70b-8192")
         system = '''You need to perform this task with very high accuracy and 'only return the output in json without any description'. Task : I am going to provide you a text and a todolist from database, text is originally a Command from an human and it will ask to read some info from the database, please analyze the input and based on that return the clear and concise data from database in such format that a assistant is giving answer to a boss, and based on it 'only return the output in json format without any description', fromat as "message" : "YourMessageForInputQuery"  '''
-        
-        
+                
         all_tasks = DatabaseAct.fetch_all_data()  # Ensure this function returns a list of tasks
         strAllTasks = ''
         for task in all_tasks:

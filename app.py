@@ -68,6 +68,9 @@ class AudioInputApp:
         self.command_thread.start()
 
     def record_audio(self):
+        '''
+        Purpose : Acitvily listens for audio until trigger word is received
+        '''
         with sr.Microphone() as source:
             print("Listening...")
             try:
@@ -98,6 +101,9 @@ class AudioInputApp:
             self.record_audio()
 
     def process_commands(self):
+        '''
+        Purpose : Becomes active trigger words is detected and perfrom the command given
+        '''
         while self.ProcessCondition:
             with sr.Microphone() as source:
                 print("Listening for commands...")
@@ -121,6 +127,9 @@ class AudioInputApp:
 
 
     def display_tasks(self):
+        '''
+        Purpose : Fetcha all the task from database and display in tree table
+        '''
         for item in self.tree.get_children():
             self.tree.delete(item)
 
@@ -136,11 +145,17 @@ class AudioInputApp:
         self.tree.column("TaskStatus", anchor=tk.CENTER)
 
     def read_out_message(self, message):
+        '''
+        Purpose : takes text as an input and read the messgae init
+        '''
         message = " " + message
         self.ttsEngine.say(message)
         self.ttsEngine.runAndWait()
 
     def ProcessInput(self, strUserText):
+        '''
+        Purpose : takes text as an input and Process it using llm and then perfrom the db task as needed
+        '''
         DBResponse = ''
         if strUserText:
             response = LLMProcessing.UserInputProcessing(strUserText)
@@ -169,10 +184,11 @@ class AudioInputApp:
                 self.read_out_message(response['AssistantMessage'])
 
         return DBResponse
+    
+
 def run_app():
     root = tk.Tk()
     app = AudioInputApp(root)
-    # root.after(100, app.record_audio)
     root.mainloop()
 
 if __name__ == "__main__":
