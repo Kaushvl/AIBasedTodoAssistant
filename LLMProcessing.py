@@ -90,4 +90,4 @@ class LLMProcessing:
 
 
 if __name__ == '__main__':
-    print(LLMProcessing.UserInputProcessing("Add a task about cleaning labtop with low priority and status as inprogress"))
+    print(LLMProcessing.UserInputProcessing("Add a task about cleaning labtop"))
